@@ -1,0 +1,4 @@
+name = Drupal 8 Cache
+description = Backport of the Drupal 8 caching system.
+package = Performance and scalability
+core = 7.x
