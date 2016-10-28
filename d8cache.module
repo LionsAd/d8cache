@@ -35,7 +35,6 @@ function d8cache_invalidate_cache_tags($tags) {
   if (function_exists( 'pantheon_clear_edge_keys')) {
     pantheon_clear_edge_keys($tags);
   }
-  error_log(print_r([__FUNCTION__, $tags], TRUE));
 }
 
 // -----------------------------------------------------------------------
