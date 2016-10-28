@@ -7,6 +7,63 @@
 // -----------------------------------------------------------------------
 // Core Hooks
 
+/**
+ * Implements hook_process_html().
+ */
+function d8cache_process_html(&$variables) {
+  drupal_emit_cache_tags();
+}
+
+/**
+ * Implements hook_emit_cache_tags().
+ */
+function d8cache_emit_cache_tags($tags) {
+  if (variable_get('d8cache_emit_cache_tags', TRUE)) {
+    drupal_add_http_header('Surrogate-Keys', implode(' ', $tags));
+  }
+}
+
+/**
+ * Implements hook_invalidate_cache_tags().
+ */
+function d8cache_invalidate_cache_tags($tags) {
+  // Temporary Pantheon integration.
+  if (function_exists( 'pantheon_clear_edge_keys')) {
+    pantheon_clear_edge_keys($tags);
+  }
+  error_log(print_r([__FUNCTION__, $tags], TRUE));
+}
+
+/**
+ * Implements hook_entity_view().
+ */
+function d8cache_entity_view($entity, $entity_type, $view_mode, $langcode) {
+  $entity->content['#attached']['drupal_add_cache_tags'][][] = _d8cache_entity_get_cache_tags($entity_type, $entity);
+  if ($view_mode != 'full') {
+    $entity->content['#attached']['drupal_add_cache_tags'][][] = _d8cache_entity_get_list_cache_tags($entity_type);
+  }
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function d8cache_entity_insert($entity, $entity_type) {
+  _d8cache_entity_invalidate_tags($entity_type, $entity, TRUE);
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function d8cache_entity_update($entity, $entity_type) {
+  _d8cache_entity_invalidate_tags($entity_type, $entity, FALSE);
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function d8cache_entity_delete($entity, $entity_type) {
+  _d8cache_entity_invalidate_tags($entity_type, $entity, TRUE);
+}
 
 // -----------------------------------------------------------------------
 // Contrib Hooks
@@ -15,6 +72,47 @@
 // -----------------------------------------------------------------------
 // Public API
 
+function drupal_add_cache_tags(array $tags) {
+  $stored_tags = &drupal_static(__FUNCTION__, array());
+  $stored_tags = array_unique(array_merge($stored_tags, $tags));
+}
+
+function drupal_get_cache_tags() {
+  $stored_tags = &drupal_static('drupal_add_cache_tags', array());
+  return $stored_tags;
+}
+
+function drupal_invalidate_cache_tags(array $tags) {
+  module_invoke_all('invalidate_cache_tags', $tags);
+}
+
+function drupal_emit_cache_tags() {
+  $tags = drupal_get_cache_tags();
+  module_invoke_all('emit_cache_tags', $tags);
+}
 
 // -----------------------------------------------------------------------
 // Helper functions
+
+function _d8cache_entity_invalidate_cache_tags($entity_type, $entity, $invalidate_list = FALSE) {
+  $tags = array();
+  if ($invalidate_list) {
+    $tags[] = _d8cache_entity_get_list_cache_tags($entity_type);
+  }
+  $tags[] = _d8cache_entity_get_cache_tags($entity_type, $entity);
+
+  drupal_invalidate_cache_tags($tags);
+}
+
+function _d8cache_entity_get_list_cache_tags($entity_type) {
+  return array(
+    $entity_type . '_list',
+  );
+}
+
+function _d8cache_entity_get_cache_tags($entity_type, $entity) {
+  list($entity_id,,) = entity_extract_ids($entity_type, $entity);
+  return array(
+    $entity_type . ':' . $entity_id,
+  );
+}
