@@ -41,9 +41,9 @@ function d8cache_entity_delete($entity, $entity_type) {
 function _d8cache_entity_invalidate_cache_tags($entity_type, $entity, $invalidate_list = FALSE) {
   $tags = array();
   if ($invalidate_list) {
-    $tags[] = _d8cache_entity_get_list_cache_tags($entity_type);
+    $tags = _d8cache_entity_get_list_cache_tags($entity_type);
   }
-  $tags[] = _d8cache_entity_get_cache_tags($entity_type, $entity);
+  $tags = array_merge($tags, _d8cache_entity_get_cache_tags($entity_type, $entity));
 
   drupal_invalidate_cache_tags($tags);
 }
