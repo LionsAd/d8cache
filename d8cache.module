@@ -23,7 +23,7 @@ function d8cache_process_html(&$variables) {
  */
 function d8cache_emit_cache_tags($tags) {
   if (variable_get('d8cache_emit_cache_tags', TRUE)) {
-    drupal_add_http_header('Surrogate-Keys', implode(' ', $tags));
+    drupal_add_http_header('Surrogate-Key', implode(' ', $tags));
   }
 }
 
