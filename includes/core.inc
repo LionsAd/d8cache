@@ -14,6 +14,7 @@ function drupal_add_cache_tags(array $tags) {
 
 function drupal_get_cache_tags() {
   $stored_tags = &drupal_static('drupal_add_cache_tags', array());
+  sort($stored_tags);
   return $stored_tags;
 }
 
