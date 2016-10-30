@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/includes/core.inc';
 require_once __DIR__ . '/includes/entity.inc';
+require_once __DIR__ . '/includes/theme.inc';
 
 // -----------------------------------------------------------------------
 // Core Hooks
