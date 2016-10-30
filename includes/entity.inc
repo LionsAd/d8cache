@@ -8,10 +8,33 @@
  * Implements hook_entity_view().
  */
 function d8cache_entity_view($entity, $entity_type, $view_mode, $langcode) {
-  $entity->content['#attached']['drupal_add_cache_tags'][][] = _d8cache_entity_get_cache_tags($entity_type, $entity);
-  if ($view_mode != 'full') {
-    $entity->content['#attached']['drupal_add_cache_tags'][][] = _d8cache_entity_get_list_cache_tags($entity_type);
+  $tags = _d8cache_entity_get_cache_tags($entity_type, $entity);
+  $tags[] = $entity_type . '_view';
+
+  if ($entity_type == 'node' && $view_mode != 'full') {
+    // @todo Find a better way to add list cache tags.
+    $tags = array_merge($tags, _d8cache_entity_get_list_cache_tags($entity_type));
   }
+
+  $entity->content['#attached']['drupal_add_cache_tags'][][0] = $tags;
+}
+
+/**
+ * Implements hook_entity_load().
+ */
+function d8cache_entity_load($entities, $entity_type) {
+  $disabled = &drupal_static(__FUNCTION__, FALSE);
+
+  if ($disabled) {
+    return;
+  }
+
+  $tags = array();
+  foreach ($entities as $entity_id => $entity) {
+    $tags[] = $entity_type . ':' . $entity_id;
+  }
+
+  drupal_add_cache_tags($tags);
 }
 
 /**
@@ -33,6 +56,33 @@ function d8cache_entity_update($entity, $entity_type) {
  */
 function d8cache_entity_delete($entity, $entity_type) {
   _d8cache_entity_invalidate_cache_tags($entity_type, $entity, TRUE);
+}
+
+// -----------------------------------------------------------------------
+// Contrib hooks
+
+/**
+ * Implements hook_entitycache_load().
+ */
+function d8cache_entitycache_load($entities, $entity_type) {
+  d8cache_entity_load($entities, $entity_type);
+}
+
+// -----------------------------------------------------------------------
+// Public API
+
+/**
+ * Temporarily disable adding of cache tags during entity loading.
+ */
+function d8cache_disable_cache_tags_for_entity_load($new_status = NULL) {
+  $state = &drupal_static('d8cache_entity_load', FALSE);
+  $old_state = $state;
+
+  if ($new_state !== NULL) {
+    $state = $new_state;
+  }
+
+  return $old_state;
 }
 
 // -----------------------------------------------------------------------
