@@ -9,7 +9,7 @@
 
 function drupal_add_cache_tags(array $tags) {
   $stored_tags = &drupal_static(__FUNCTION__, array());
-  $stored_tags = array_unique(array_merge($stored_tags, $tags));
+  $stored_tags = drupal_merge_cache_tags($stored_tags, $tags);
 }
 
 function drupal_get_cache_tags() {
@@ -20,6 +20,10 @@ function drupal_get_cache_tags() {
 
 function drupal_invalidate_cache_tags(array $tags) {
   module_invoke_all('invalidate_cache_tags', $tags);
+}
+
+function drupal_merge_cache_tags(array $tags1, array $tags2) {
+  return array_unique(array_merge($tags1, $tags2));
 }
 
 function drupal_emit_cache_tags() {
