@@ -19,6 +19,8 @@ function drupal_get_cache_tags() {
 }
 
 function drupal_invalidate_cache_tags(array $tags) {
+  // @todo Add hooks to .api.php.
+  drupal_alter('pre_invalidate_cache_tags', $tags);
   module_invoke_all('invalidate_cache_tags', $tags);
 }
 
@@ -28,5 +30,7 @@ function drupal_merge_cache_tags(array $tags1, array $tags2) {
 
 function drupal_emit_cache_tags() {
   $tags = drupal_get_cache_tags();
+  // @todo Add hooks to .api.php.
+  drupal_alter('pre_emit_cache_tags', $tags);
   module_invoke_all('emit_cache_tags', $tags);
 }
