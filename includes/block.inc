@@ -5,6 +5,15 @@
  */
 
 /**
+ * Implements hook_block_list_alter().
+ */
+function d8cache_block_list_alter(&$blocks) {
+  foreach ($blocks as $key => $block) {
+    $block->drupal_cache_tags[] = 'block_list';
+  }
+}
+
+/**
  * Implements hook_block_view_alter().
  */
 function d8cache_block_view_alter(&$data, $block) {
@@ -51,9 +60,15 @@ function d8cache_form_block_admin_display_form_alter(&$form, $form_state) {
 // Helper functions
 
 function _d8cache_block_get_cache_tags($block) {
-  return array(
-    'block:' . $block->module . '.' . str_replace('-', '_', drupal_html_class($block->delta)),
-  );
+  $tags = array();
+  $tags[] = 'block:' . $block->module . '.' . str_replace('-', '_', drupal_html_class($block->delta));
+
+  // Allow blocks to set cache tags.
+  if (!empty($block->drupal_cache_tags)) {
+    $tags = array_merge($tags, $block->drupal_cache_tags);
+  }
+
+  return $tags;
 }
 
 /**
