@@ -4,6 +4,9 @@
  * Menu functions and hooks for the D8 caching system backport.
  */
 
+// @todo In theory we should take over cache_menu and re-act to cache clear
+//       events by invalidating a menu_view tag.
+
 /**
  * Implements hook_preprocess_menu_link().
  */
