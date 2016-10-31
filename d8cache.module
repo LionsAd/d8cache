@@ -5,7 +5,9 @@
  */
 
 require_once __DIR__ . '/includes/core.inc';
+
 require_once __DIR__ . '/includes/block.inc';
+require_once __DIR__ . '/includes/comment.inc';
 require_once __DIR__ . '/includes/entity.inc';
 require_once __DIR__ . '/includes/menu.inc';
 require_once __DIR__ . '/includes/theme.inc';
