@@ -10,6 +10,7 @@ require_once __DIR__ . '/includes/block.inc';
 require_once __DIR__ . '/includes/comment.inc';
 require_once __DIR__ . '/includes/entity.inc';
 require_once __DIR__ . '/includes/menu.inc';
+require_once __DIR__ . '/includes/node.inc';
 require_once __DIR__ . '/includes/theme.inc';
 require_once __DIR__ . '/includes/user.inc';
 
