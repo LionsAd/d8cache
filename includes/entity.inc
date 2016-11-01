@@ -41,21 +41,21 @@ function d8cache_entity_load($entities, $entity_type) {
  * Implements hook_entity_insert().
  */
 function d8cache_entity_insert($entity, $entity_type) {
-  _d8cache_entity_invalidate_cache_tags($entity_type, $entity, TRUE);
+  _d8cache_entity_invalidate_cache_tags($entity_type, $entity);
 }
 
 /**
  * Implements hook_entity_update().
  */
 function d8cache_entity_update($entity, $entity_type) {
-  _d8cache_entity_invalidate_cache_tags($entity_type, $entity, FALSE);
+  _d8cache_entity_invalidate_cache_tags($entity_type, $entity);
 }
 
 /**
  * Implements hook_entity_delete().
  */
 function d8cache_entity_delete($entity, $entity_type) {
-  _d8cache_entity_invalidate_cache_tags($entity_type, $entity, TRUE);
+  _d8cache_entity_invalidate_cache_tags($entity_type, $entity);
 }
 
 // -----------------------------------------------------------------------
@@ -88,11 +88,8 @@ function d8cache_disable_cache_tags_for_entity_load($new_status = NULL) {
 // -----------------------------------------------------------------------
 // Helper functions
 
-function _d8cache_entity_invalidate_cache_tags($entity_type, $entity, $invalidate_list = FALSE) {
-  $tags = array();
-  if ($invalidate_list) {
-    $tags = _d8cache_entity_get_list_cache_tags($entity_type);
-  }
+function _d8cache_entity_invalidate_cache_tags($entity_type, $entity) {
+  $tags = _d8cache_entity_get_list_cache_tags($entity_type);
   $tags = array_merge($tags, _d8cache_entity_get_cache_tags($entity_type, $entity));
 
   drupal_invalidate_cache_tags($tags);
