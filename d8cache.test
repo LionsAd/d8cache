@@ -1,0 +1,80 @@
+<?php
+
+/**
+ * @file
+ * Drupal 8 Caching backport tests.
+ */
+
+/**
+ * Test the Drupal 8 caching backport.
+ */
+class D8CacheUnitTestCase extends DrupalUnitTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Drupal 8 Cache Backport',
+      'description' => 'Tests the Drupal 8 caching backport.',
+      'group' => 'D8Cache',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('d8cache');
+  }
+
+  /**
+   * Tests that attachment collectors work properly.
+   */
+  function testAttachmentCollectors() {
+    // Skip test if attachment collectors do not exist.
+    if (!class_exists('DrupalAttachmentsCollector')) {
+      return;
+    }
+ 
+    $expected_attachments = array();
+    $expected_attachments['drupal_add_cache_tags'] = array(
+      array(array('foo:1')),
+      array(array('foo:1', 'foo:2')),
+      array(array('foo:3', 'foo:2')),
+      array(array('bar:1')),
+      array(array('foo:3', 'foo:4'), array('second-arg-is-ignored:2')),
+    );
+
+    $expected_cache_tags = array(
+      'bar:1',
+      'foo:1',
+      'foo:2',
+      'foo:3',
+      'foo:4',
+    );
+
+    $attachments_collector = new DrupalAttachmentsCollector();
+    drupal_add_cache_tags(array('foo:1'));
+    drupal_add_cache_tags(array('foo:1', 'foo:2'));
+    drupal_add_cache_tags(array('foo:3', 'foo:2'));
+
+    $build = array();
+    $build['#markup'] = 'foo';
+    $build['#attached']['drupal_add_cache_tags'][] = array(
+      array('bar:1'),
+    );
+    $build['#attached']['drupal_add_cache_tags'][] = array(
+      array('foo:3', 'foo:4'),
+      array('second-arg-is-ignored:2'),
+    );
+
+    drupal_render($build);
+
+    $attachments = $attachments_collector->getAttachments();
+    unset($attachments_collector);
+
+    $this->assertEqual($attachments, $expected_attachments, 'Expected attachments are present.');
+
+    $rendered_build = array();
+    $rendered_build['#attached'] = $attachments;
+
+    $cache_tags = drupal_get_cache_tags_from_render_array($rendered_build);
+
+    $this->assertEqual($cache_tags, $expected_cache_tags, 'Expected cache tags are present.');
+  }
+}

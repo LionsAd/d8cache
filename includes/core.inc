@@ -8,6 +8,12 @@
 // Public API
 
 function drupal_add_cache_tags(array $tags) {
+  // Process the data as attachment if we have an active attachments collector.
+  if (function_exists('drupal_has_attachments_collector') && drupal_has_attachments_collector()) {
+    drupal_add_attachment('drupal_add_cache_tags', array($tags));
+    return;
+  }
+
   $stored_tags = &drupal_static(__FUNCTION__, array());
   $stored_tags = drupal_merge_cache_tags($stored_tags, $tags);
 }
@@ -16,6 +22,24 @@ function drupal_get_cache_tags() {
   $stored_tags = &drupal_static('drupal_add_cache_tags', array());
   sort($stored_tags);
   return $stored_tags;
+}
+
+function drupal_get_cache_tags_from_render_array($build) {
+  if (!isset($build['#attached']['drupal_add_cache_tags'])) {
+    return array();
+  }
+
+  $tags = array();
+  foreach ($build['#attached']['drupal_add_cache_tags'] as $key => $parameters) {
+    if (!isset($parameters[0])) {
+      continue;
+    }
+
+    $tags = drupal_merge_cache_tags($tags, $parameters[0]);
+  }
+
+  sort($tags);
+  return $tags;
 }
 
 function drupal_invalidate_cache_tags(array $tags) {
