@@ -14,6 +14,9 @@ require_once __DIR__ . '/includes/node.inc';
 require_once __DIR__ . '/includes/theme.inc';
 require_once __DIR__ . '/includes/user.inc';
 
+// @todo Remove once integrated into drops-7.
+require_once __DIR__ . '/includes/pantheon.inc';
+
 // -----------------------------------------------------------------------
 // Core Hooks
 
@@ -29,18 +32,8 @@ function d8cache_process_html(&$variables) {
  * Implements hook_emit_cache_tags().
  */
 function d8cache_emit_cache_tags($tags) {
-  if (variable_get('d8cache_emit_cache_tags', TRUE)) {
-    drupal_add_http_header('Surrogate-Key', implode(' ', $tags));
-  }
-}
-
-/**
- * Implements hook_invalidate_cache_tags().
- */
-function d8cache_invalidate_cache_tags($tags) {
-  // Temporary Pantheon integration.
-  if (function_exists( 'pantheon_clear_edge_keys')) {
-    pantheon_clear_edge_keys($tags);
+  if (variable_get('d8cache_emit_cache_tags', FALSE)) {
+    drupal_add_http_header('X-Drupal-Cache-Tags', implode(' ', $tags));
   }
 }
 
