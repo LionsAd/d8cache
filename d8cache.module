@@ -4,7 +4,9 @@
  * Main module file for the D8 caching system backport.
  */
 
+// @todo Remove once integrated into D7 core.
 require_once __DIR__ . '/includes/core.inc';
+require_once __DIR__ . '/includes/core-attachments-collector.inc';
 
 require_once __DIR__ . '/includes/block.inc';
 require_once __DIR__ . '/includes/comment.inc';

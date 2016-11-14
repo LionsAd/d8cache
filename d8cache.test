@@ -37,7 +37,7 @@ class D8CacheUnitTestCase extends DrupalUnitTestCase {
       array(array('foo:1', 'foo:2')),
       array(array('foo:3', 'foo:2')),
       array(array('bar:1')),
-      array(array('foo:3', 'foo:4'), array('second-arg-is-ignored:2')),
+      array(array('foo:3', 'foo:4')),
     );
 
     $expected_cache_tags = array(
@@ -60,7 +60,6 @@ class D8CacheUnitTestCase extends DrupalUnitTestCase {
     );
     $build['#attached']['drupal_add_cache_tags'][] = array(
       array('foo:3', 'foo:4'),
-      array('second-arg-is-ignored:2'),
     );
 
     drupal_render($build);
