@@ -69,7 +69,63 @@ function d8cache_invalidate_cache_tags($tags) {
 // -----------------------------------------------------------------------
 // Public API
 
-function d8cache_cache_tags_generate_checksum($tags) {
+/**
+ * Returns the sum total of validations for a given set of tags.
+ *
+ * Called by a backend when storing a cache item.
+ *
+ * @param string[] $tags
+ *   Array of cache tags.
+ *
+ * @return string
+ *   Cache tag invalidations checksum.
+ */
+function d8cache_cache_tags_get_current_checksum(array $tags) {
+  $invalidated_tags = &drupal_static('d8cache_invalidated_tags', array());
+
+  // Remove tags that were already invalidated during this request from the
+  // static caches so that another invalidation can occur later in the same
+  // request. Without that, written cache items would not be invalidated
+  // correctly.
+  foreach ($tags as $tag) {
+    unset($invalidated_tags[$tag]);
+  }
+
+  return _d8cache_cache_tags_calculate_checksum($tags);
+}
+
+/**
+ * Returns whether the checksum is valid for the given cache tags.
+ *
+ * Used when retrieving a cache item in a cache backend, to verify that no
+ * cache tag based invalidation happened.
+ *
+ * @param int $checksum
+ *   The checksum that was stored together with the cache item.
+ * @param string[] $tags
+ *   The cache tags that were stored together with the cache item.
+ *
+ * @return bool
+ *   FALSE if cache tag invalidations happened for the passed in tags since
+ *   the cache item was stored, TRUE otherwise.
+ */
+function d8cache_cache_tags_is_valid($checksum, array $tags) {
+  return $checksum == _d8cache_cache_tags_calculate_checksum($tags);
+}
+
+// -----------------------------------------------------------------------
+// Helper functions
+
+/**
+ * Calculates the current checksum for a given set of tags.
+ *
+ * @param array $tags
+ *   The array of tags to calculate the checksum for.
+ *
+ * @return int
+ *   The calculated checksum.
+ */
+function _d8cache_cache_tags_calculate_checksum(array $tags) {
   $tag_cache = &drupal_static('d8cache_tag_cache', array());
   $checksum = 0;
 
@@ -89,6 +145,3 @@ function d8cache_cache_tags_generate_checksum($tags) {
 
   return $checksum;
 }
-
-// -----------------------------------------------------------------------
-// Helper functions
