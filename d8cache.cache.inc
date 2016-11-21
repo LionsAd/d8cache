@@ -111,6 +111,10 @@ class D8Cache implements TaggableDrupalCacheInterface {
    * {@inheritdoc}
    */
   public function set($cid, $data, $expire = CACHE_PERMANENT, $tags = array()) {
+
+    // Add CACHE_PERMANENT for demo purposes.
+    $expire = CACHE_PERMANENT;
+
     // Special case cache_page.
     if ($this->bin == 'cache_page') {
       $page_cache_tags = &drupal_static('d8cache_emit_cache_tags', array());
