@@ -39,6 +39,29 @@ function d8cache_emit_cache_tags($tags) {
   }
 }
 
+/**
+ * Implements hook_invalidate_cache_tags().
+ */
+function d8cache_invalidate_cache_tags($tags) {
+ $tag_cache = &drupal_static('d8cache_tag_cache', array());
+ $invalidated_tags = &drupal_static('d8cache_invalidated_tags', array());
+
+  foreach ($tags as $tag) {
+    // Only invalidate tags once per request unless they are written again.
+    if (isset($invalidated_tags[$tag])) {
+      continue;
+    }
+
+    $invalidated_tags[$tag] = TRUE;
+    unset($tag_cache[$tag]);
+    db_merge('d8cache_cache_tags')
+      ->key(array('tag' => $tag))
+      ->fields(array('invalidations' => 1))
+      ->expression('invalidations', 'invalidations + 1')
+      ->execute();
+  }
+}
+
 // -----------------------------------------------------------------------
 // Contrib Hooks
 
@@ -46,6 +69,26 @@ function d8cache_emit_cache_tags($tags) {
 // -----------------------------------------------------------------------
 // Public API
 
+function d8cache_cache_tags_generate_checksum($tags) {
+  $tag_cache = &drupal_static('d8cache_tag_cache', array());
+  $checksum = 0;
+
+  $query_tags = array_diff($tags, array_keys($tag_cache));
+  if ($query_tags) {
+    if ($db_tags = db_query('SELECT tag, invalidations FROM {d8cache_cache_tags} WHERE tag IN (:tags)', array(':tags' => $query_tags))->fetchAllKeyed()) {
+      $tag_cache += $db_tags;
+    }
+
+    // Fill static cache with empty objects for tags not found in the database.
+    $tag_cache += array_fill_keys(array_diff($query_tags, array_keys($db_tags)), 0);
+  }
+
+  foreach ($tags as $tag) {
+    $checksum += $tag_cache[$tag];
+  }
+
+  return $checksum;
+}
 
 // -----------------------------------------------------------------------
 // Helper functions
