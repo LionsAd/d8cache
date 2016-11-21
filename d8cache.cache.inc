@@ -57,9 +57,14 @@ class D8Cache implements TaggableDrupalCacheInterface {
    * {@inheritdoc}
    */
   public function getMultiple(&$cids) {
+    if ($this->bin == 'cache_page' && !function_exists('d8cache_cache_tags_is_valid')) {
+      // In case that we use the internal page cache we need to load the
+      // module early.
+      drupal_load('module', 'd8cache');
+    }
+
     $cache = array();
     $cids_map = array_flip($cids);
-    return $cache;
 
     foreach ($this->backend->getMultiple($cids) as $cid => $item) {
       // This should never happen.
@@ -80,6 +85,7 @@ class D8Cache implements TaggableDrupalCacheInterface {
         }
 
         // Check if this item was expired already.
+        $expire = $data->d8cache_expire;
         if ($expire !== CACHE_PERMANENT && $expire !== CACHE_TEMPORARY && $expire <= REQUEST_TIME) {
           $valid = FALSE;
         }
@@ -104,7 +110,15 @@ class D8Cache implements TaggableDrupalCacheInterface {
   /**
    * {@inheritdoc}
    */
-  public function set($cid, $data, $expire = Cache::PERMANENT, $tags = array()) {
+  public function set($cid, $data, $expire = CACHE_PERMANENT, $tags = array()) {
+    // Special case cache_page.
+    if ($this->bin == 'cache_page') {
+      $page_cache_tags = &drupal_static('d8cache_emit_cache_tags', array());
+
+      $tags = drupal_merge_cache_tags($tags, $page_cache_tags);
+    }
+
+    // Render arrays.
     if (is_array($data) && isset($data['#attached']['drupal_add_cache_tags'])) {
       $tags = drupal_merge_cache_tags($tags, drupal_get_cache_tags_from_render_array($data));
     }
@@ -125,6 +139,7 @@ class D8Cache implements TaggableDrupalCacheInterface {
       $data = (object) array(
         'd8cache_tags' => $tags,
         'd8cache_checksum' => $checksum,
+        'd8cache_expire' => $expire,
         'd8cache_data' => $data,
       );
 

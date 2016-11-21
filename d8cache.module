@@ -40,9 +40,14 @@ function d8cache_ajax_render_alter(&$commands) {
  * Implements hook_emit_cache_tags().
  */
 function d8cache_emit_cache_tags($tags) {
+  $page_cache_tags = &drupal_static(__FUNCTION__, array());
+
   if (variable_get('d8cache_emit_cache_tags', FALSE)) {
     drupal_add_http_header('X-Drupal-Cache-Tags', implode(' ', $tags));
   }
+
+  // Store the emitted cache tags for further use.
+  $page_cache_tags = $tags;
 }
 
 /**
