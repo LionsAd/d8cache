@@ -23,8 +23,12 @@ function drupal_add_cache_tags(array $tags) {
 if (!function_exists('drupal_get_cache_tags')) {
 function drupal_get_cache_tags() {
   $stored_tags = &drupal_static('drupal_add_cache_tags', array());
-  sort($stored_tags);
-  return $stored_tags;
+
+  // Add the rendered cache tag.
+  $tags = drupal_merge_cache_tags($stored_tags, array('rendered'));
+
+  sort($tags);
+  return $tags;
 }
 }
 
@@ -42,6 +46,9 @@ function drupal_get_cache_tags_from_render_array($build) {
 
     $tags = drupal_merge_cache_tags($tags, $parameters[0]);
   }
+
+  // Add the 'rendered' cache tag.
+  $tags = drupal_merge_cache_tags($tags, array('rendered'));
 
   sort($tags);
   return $tags;
