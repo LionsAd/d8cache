@@ -26,7 +26,13 @@ require_once __DIR__ . '/includes/pantheon.inc';
  * Implements hook_process_html().
  */
 function d8cache_process_html(&$variables) {
-  // @todo Find a way to work with ajax.
+  drupal_emit_cache_tags();
+}
+
+/**
+ * Implements hook_ajax_render_alter().
+ */
+function d8cache_ajax_render_alter(&$commands) {
   drupal_emit_cache_tags();
 }
 
