@@ -27,6 +27,7 @@ require_once __DIR__ . '/includes/pantheon.inc';
  */
 function d8cache_process_html(&$variables) {
   drupal_emit_cache_tags();
+  drupal_emit_cache_max_age();
 }
 
 /**
@@ -34,6 +35,7 @@ function d8cache_process_html(&$variables) {
  */
 function d8cache_ajax_render_alter(&$commands) {
   drupal_emit_cache_tags();
+  drupal_emit_cache_max_age();
 }
 
 /**
