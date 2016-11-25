@@ -39,6 +39,12 @@ class D8CacheUnitTestCase extends DrupalUnitTestCase {
       array(array('bar:1')),
       array(array('foo:3', 'foo:4')),
     );
+    $expected_attachments['drupal_set_cache_max_age'] = array(
+      array(600),
+      array(1200),
+      array(1800),
+      array(CACHE_MAX_AGE_PERMANENT),
+    );
 
     $expected_cache_tags = array(
       'bar:1',
@@ -49,10 +55,15 @@ class D8CacheUnitTestCase extends DrupalUnitTestCase {
       'rendered',
     );
 
+    $expected_cache_max_age = 600;
+
     $attachments_collector = new DrupalAttachmentsCollector();
     drupal_add_cache_tags(array('foo:1'));
     drupal_add_cache_tags(array('foo:1', 'foo:2'));
     drupal_add_cache_tags(array('foo:3', 'foo:2'));
+
+    drupal_set_cache_max_age(600);
+    drupal_set_cache_max_age(1200);
 
     $build = array();
     $build['#markup'] = 'foo';
@@ -61,6 +72,12 @@ class D8CacheUnitTestCase extends DrupalUnitTestCase {
     );
     $build['#attached']['drupal_add_cache_tags'][] = array(
       array('foo:3', 'foo:4'),
+    );
+    $build['#attached']['drupal_set_cache_max_age'][] = array(
+      1800,
+    );
+    $build['#attached']['drupal_set_cache_max_age'][] = array(
+      CACHE_MAX_AGE_PERMANENT,
     );
 
     drupal_render($build);
@@ -73,8 +90,12 @@ class D8CacheUnitTestCase extends DrupalUnitTestCase {
     $rendered_build = array();
     $rendered_build['#attached'] = $attachments;
 
-    $cache_tags = drupal_get_cache_tags_from_render_array($rendered_build);
+    $cacheable_metadata = drupal_get_cacheable_metadata_from_render_array($rendered_build);
 
-    $this->assertEqual($cache_tags, $expected_cache_tags, 'Expected cache tags are present.');
+    $this->assertEqual($cacheable_metadata['tags'], $expected_cache_tags, 'Expected cache tags are present.');
+    $this->assertEqual($cacheable_metadata['max-age'], $expected_cache_max_age, 'Expected cache max age is present.');
+
+    $this->assertEqual(drupal_get_cache_tags(), $expected_cache_tags, 'Expected cache tags are present in global state.');
+    $this->assertEqual(drupal_get_cache_max_age(), $expected_cache_max_age, 'Expected cache max age is present in global state.');
   }
 }
