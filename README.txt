@@ -72,5 +72,29 @@ function mymodule_invalidate_cache_tags($tags) {
 }
 
 - How can I add a custom cache tag?
-- How can I avoid the block cache being invalidated when content changes?
 
+In the code that shows th
+
+- How can I avoid the block and page cache being invalidated when content changes?
+
+Unfortunately core's internal block and page caches are invalidated when content
+changes automatically.
+
+The d8cache module has a built-in configuration option to avoid this and make
+cache items PERMANENT instead. In your settings.php use:
+
+$conf['d8cache_cache_options']['cache_block']['cache_max_age'] = CACHE_PERMANENT;
+
+to make all block caches permanent. To set them to 1 hour instead, use:
+
+$conf['d8cache_cache_options']['cache_block']['cache_max_age'] = 3600;
+
+Alternatively you can also use CACHE_PERMANENT (maximum) and then in your code
+use:
+
+drupal_add_cache_max_age(3600);
+
+to restrict the max-age further down.
+
+Note that this max-age is bubbled up to cache_page, but not for external
+proxies like Varnish.
