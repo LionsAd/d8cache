@@ -22,7 +22,7 @@ Drupal 8 API comparison
 
 * Cache::invalidateTags($tags) => drupal_invalidate_cache_tags($tags)
 * onResponseListener() / $response->getCacheTags() => drupal_get_cache_tags()
-* CacheableMetadata::fromRenderArray($build) => drupal_get_cache_tags_from_render_array($build)
+* CacheableMetadata::fromRenderArray($build) => drupal_get_cacheable_metadata_from_render_array($build)
 
 Frequently asked questions
 --------------------------
@@ -73,7 +73,15 @@ function mymodule_invalidate_cache_tags($tags) {
 
 - How can I add a custom cache tag?
 
-In the code that shows th
+In the code that you need a cache tag for use:
+
+drupal_add_cache_tags(array('mymodule:custom-tag'));
+
+In case that you need to put it into a render array use:
+
+$build['#attached']['drupal_add_cache_tags'][] = array(
+  array('bar:1'),
+);
 
 - How can I avoid the block and page cache being invalidated when content changes?
 
@@ -83,16 +91,16 @@ changes automatically.
 The d8cache module has a built-in configuration option to avoid this and make
 cache items PERMANENT instead. In your settings.php use:
 
-$conf['d8cache_cache_options']['cache_block']['cache_max_age'] = CACHE_PERMANENT;
+$conf['d8cache_cache_options']['cache_block']['cache_ttl'] = CACHE_PERMANENT;
 
 to make all block caches permanent. To set them to 1 hour instead, use:
 
-$conf['d8cache_cache_options']['cache_block']['cache_max_age'] = 3600;
+$conf['d8cache_cache_options']['cache_block']['cache_ttl'] = 3600;
 
 Alternatively you can also use CACHE_PERMANENT (maximum) and then in your code
 use:
 
-drupal_add_cache_max_age(3600);
+drupal_set_cache_max_age(3600);
 
 to restrict the max-age further down.
 
