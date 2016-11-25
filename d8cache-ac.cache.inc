@@ -12,10 +12,10 @@ class D8CacheAttachmentsCollector extends D8Cache {
   /**
    * {@inheritdoc}
    */
-  public function getMultiple(&$cids) {
+  public function getMultiple(&$cids, $allow_invalid = FALSE) {
     $cids_copy = $cids;
     // The parent will properly populate $cids, so we can rely on it.
-    $cache = parent::getMultiple($cids);
+    $cache = parent::getMultiple($cids, $allow_invalid);
 
     // Unpack the cached data and process attachments.
     foreach ($cache as $cid => $item) {

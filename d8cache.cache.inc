@@ -47,16 +47,16 @@ class D8Cache implements TaggableDrupalCacheInterface {
   /**
    * {@inheritdoc}
    */
-  public function get($cid) {
+  public function get($cid, $allow_invalid = FALSE) {
     $cids = array($cid);
-    $cache = $this->getMultiple($cids);
+    $cache = $this->getMultiple($cids, $allow_invalid);
     return reset($cache);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getMultiple(&$cids) {
+  public function getMultiple(&$cids, $allow_invalid = FALSE) {
     if ($this->bin == 'cache_page' && !function_exists('d8cache_cache_tags_is_valid')) {
       // In case that we use the internal page cache we need to load the
       // module early.
@@ -76,21 +76,17 @@ class D8Cache implements TaggableDrupalCacheInterface {
 
       // Is this packed data?
       if ($data instanceof stdClass && isset($data->d8cache_tags)) {
-        // @todo: Check validity of item here.
-        $valid = TRUE;
+        $expire = $data->d8cache_expire;
+
+        // Check expire time.
+        $item->valid = $expire === CACHE_PERMANENT || $expire === CACHE_TEMPORARY || $expire >= REQUEST_TIME;
 
         // Check if the cache tags are valid.
         if (!d8cache_cache_tags_is_valid($data->d8cache_checksum, $data->d8cache_tags)) {
-          $valid = FALSE;
+          $item->valid = FALSE;
         }
 
-        // Check if this item was expired already.
-        $expire = $data->d8cache_expire;
-        if ($expire !== CACHE_PERMANENT && $expire !== CACHE_TEMPORARY && $expire <= REQUEST_TIME) {
-          $valid = FALSE;
-        }
-
-        if (!$valid) {
+        if (!$allow_invalid && !$item->valid) {
           continue;
         }
 
