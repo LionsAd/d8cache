@@ -20,6 +20,14 @@ function d8cache_block_view_alter(&$data, $block) {
   $tags = _d8cache_block_get_cache_tags($block);
   $tags[] = 'block_view';
   drupal_add_cache_tags($tags);
+
+  $cid = _block_get_cache_id($block);
+  // If this cid is empty, reset the state of the current attachments
+  // collector group.
+  if (empty($cid)) {
+    $cache = d8cache_cache_get_object('cache_block');
+    $cache->resetCurrentAttachmentsCollector();
+  }
 }
 
 /**
