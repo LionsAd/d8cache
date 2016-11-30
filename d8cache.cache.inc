@@ -1,6 +1,7 @@
 <?php
 
 require_once DRUPAL_ROOT . '/includes/cache.inc';
+require_once __DIR__ . '/includes/core.inc';
 require_once __DIR__ . '/includes/core-taggable-dci.inc';
 
 /**
@@ -23,6 +24,13 @@ class D8Cache implements TaggableDrupalCacheInterface {
   protected $backend;
 
   /**
+   * The cache bin specific configuration.
+   *
+   * @var array
+   */
+  protected $configuration;
+
+  /**
    * Constructs a Drupal8CacheBackend object.
    *
    * @param string $bin
@@ -42,6 +50,12 @@ class D8Cache implements TaggableDrupalCacheInterface {
     }
 
     $this->backend = new $class($bin);
+    $this->configuration = array();
+
+    $configuration = variable_get('d8cache_cache_options', array());
+    if (isset($configuration[$bin])) {
+      $this->configuration = $configuration[$bin];
+    }
   }
 
   /**
@@ -107,20 +121,43 @@ class D8Cache implements TaggableDrupalCacheInterface {
    * {@inheritdoc}
    */
   public function set($cid, $data, $expire = CACHE_PERMANENT, $tags = array()) {
-
-    // Add CACHE_PERMANENT for demo purposes.
-    $expire = CACHE_PERMANENT;
+    // Allow to override the TTL for a whole bin.
+    if (isset($this->configuration['ttl'])) {
+      if ($this->configuration['ttl'] == CACHE_PERMANENT || $this->configuration['ttl'] == CACHE_TEMPORARY) {
+        $expire = $this->configuration['ttl'];
+      }
+      else {
+        $expire = REQUEST_TIME + $this->configuration['ttl'];
+      }
+    }
 
     // Special case cache_page.
     if ($this->bin == 'cache_page') {
       $page_cache_tags = &drupal_static('d8cache_emit_cache_tags', array());
+      $page_cache_max_age = &drupal_static('d8cache_emit_cache_max_age', CACHE_MAX_AGE_PERMANENT);
 
-      $tags = drupal_merge_cache_tags($tags, $page_cache_tags);
+      if (!empty($page_cache_tags)) {
+        $tags = drupal_merge_cache_tags($tags, $page_cache_tags);
+      }
+
+      if ($page_cache_max_age != CACHE_MAX_AGE_PERMANENT) {
+        $expire = $this->mergeExpireWithMaxAge($expire, $page_cache_max_age);
+      }
     }
 
     // Render arrays.
-    if (is_array($data) && isset($data['#attached']['drupal_add_cache_tags'])) {
-      $tags = drupal_merge_cache_tags($tags, drupal_get_cache_tags_from_render_array($data));
+    if (is_array($data)
+        && isset($data['#attached'])
+        && (isset($data['#attached']['drupal_add_cache_tags']) || isset($data['#attached']['drupal_set_cache_max_age']))) {
+      $cacheable_metadata = drupal_get_cacheable_metadata_from_render_array($data);
+
+      if (!empty($cacheable_metadata['tags'])) {
+        $tags = drupal_merge_cache_tags($tags, $cacheable_metadata['tags']);
+      }
+
+      if ($cacheable_metadata['max-age'] != CACHE_MAX_AGE_PERMANENT) {
+        $expire = $this->mergeExpireWithMaxAge($expire, $cacheable_metadata['max-age']);
+      }
     }
 
     // No tags, present, just continue normally.
@@ -163,4 +200,36 @@ class D8Cache implements TaggableDrupalCacheInterface {
     return FALSE;
   }
 
+  /**
+   * Merges an max-age value with an expire timestamp.
+   *
+   * @param int $expire
+   *   A unix timestamp when this item will expire or one of the CACHE_*
+   *   constants.
+   * @param int $max_age
+   *   A max-age ttl value like an integer or CACHE_MAX_AGE_PERMANENT
+   *
+   * @return int
+   *   A unix timestamp when this item will expire or one of the CACHE_*
+   *   constants.
+   */
+  protected function mergeExpireWithMaxAge($expire, $max_age) {
+    // Do not mess with temporary items.
+    if ($expire == CACHE_TEMPORARY) {
+      return $expire;
+    }
+
+    // In case $max_age is PERMANENT return $expire as is.
+    if ($max_age === CACHE_MAX_AGE_PERMANENT) {
+      return $expire;
+    }
+
+    // If $expire is permanent return the numeric ttl.
+    if ($expire == CACHE_PERMANENT) {
+      return REQUEST_TIME + $max_age;
+    }
+
+    // In all other cases return the minimum of ttl($expire) and $max_age.
+    return REQUEST_TIME + min(REQUEST_TIME - $expire, $max_age);
+  }
 }
