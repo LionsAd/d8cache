@@ -126,6 +126,19 @@ function d8cache_cache_tags_is_valid($checksum, array $tags) {
   return $checksum == _d8cache_cache_tags_calculate_checksum($tags);
 }
 
+/**
+ * Wraps the internal Drupal API with an official API.
+ *
+ * @param string $bin
+ *   The bin to get a cache object for.
+ * @return DrupalCacheInterface
+ *   The DrupalCacheInterface object for the selected bin.
+ */
+function d8cache_cache_get_object($bin) {
+  return _cache_get_object($bin);
+}
+
+
 // -----------------------------------------------------------------------
 // Helper functions
 
