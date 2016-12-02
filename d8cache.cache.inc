@@ -71,12 +71,6 @@ class D8Cache implements TaggableDrupalCacheInterface {
    * {@inheritdoc}
    */
   public function getMultiple(&$cids, $allow_invalid = FALSE) {
-    if ($this->bin == 'cache_page' && !function_exists('d8cache_cache_tags_is_valid')) {
-      // In case that we use the internal page cache we need to load the
-      // module early.
-      drupal_load('module', 'd8cache');
-    }
-
     $cache = array();
     $cids_map = array_flip($cids);
 
@@ -95,7 +89,7 @@ class D8Cache implements TaggableDrupalCacheInterface {
       // Is this packed data?
       if ($data instanceof stdClass && isset($data->d8cache_tags)) {
         // Check if the cache tags are valid.
-        if (!d8cache_cache_tags_is_valid($data->d8cache_checksum, $data->d8cache_tags)) {
+        if (!$this->checksumValid($data->d8cache_checksum, $data->d8cache_tags)) {
           $item->valid = FALSE;
         }
 
@@ -170,7 +164,7 @@ class D8Cache implements TaggableDrupalCacheInterface {
       $this->backend->set($cid, $data, $expire, $tags);
     }
     else {
-      $checksum = d8cache_cache_tags_get_current_checksum($tags);
+      $checksum = $this->getCurrentChecksum($tags);
 
       $data = (object) array(
         'd8cache_tags' => $tags,
@@ -230,5 +224,45 @@ class D8Cache implements TaggableDrupalCacheInterface {
 
     // In all other cases return the minimum of ttl($expire) and $max_age.
     return REQUEST_TIME + min(REQUEST_TIME - $expire, $max_age);
+  }
+
+  /**
+   * Returns the sum total of validations for a given set of tags.
+   *
+   * Called by a backend when storing a cache item.
+   *
+   * @param string[] $tags
+   *   Array of cache tags.
+   *
+   * @return string
+   *   Cache tag invalidations checksum.
+   */
+  protected function getCurrentChecksum(array $tags) {
+    return d8cache_cache_tags_get_current_checksum($tags);
+  }
+
+  /**
+   * Returns whether the checksum is valid for the given cache tags.
+   *
+   * Used when retrieving a cache item in a cache backend, to verify that no
+   * cache tag based invalidation happened.
+   *
+   * @param int $checksum
+   *   The checksum that was stored together with the cache item.
+   * @param string[] $tags
+   *   The cache tags that were stored together with the cache item.
+   *
+   * @return bool
+   *   FALSE if cache tag invalidations happened for the passed in tags since
+   *   the cache item was stored, TRUE otherwise.
+   */
+  protected function checksumValid($checksum, array $tags) {
+    if ($this->bin == 'cache_page' && !function_exists('d8cache_cache_tags_is_valid')) {
+      // In case that we use the internal page cache we need to load the
+      // module early.
+      drupal_load('module', 'd8cache');
+    }
+
+    return d8cache_cache_tags_is_valid($checksum, $tags);
   }
 }
