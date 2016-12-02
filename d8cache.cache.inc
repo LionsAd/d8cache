@@ -87,24 +87,23 @@ class D8Cache implements TaggableDrupalCacheInterface {
       }
 
       $data = $item->data;
+      $expire = isset($data->d8cache_expire) ? $data->d8cache_expire : $item->expire;
+
+      // Check expire time.
+      $item->valid = $expire === CACHE_PERMANENT || $expire === CACHE_TEMPORARY || $expire >= REQUEST_TIME;
 
       // Is this packed data?
       if ($data instanceof stdClass && isset($data->d8cache_tags)) {
-        $expire = $data->d8cache_expire;
-
-        // Check expire time.
-        $item->valid = $expire === CACHE_PERMANENT || $expire === CACHE_TEMPORARY || $expire >= REQUEST_TIME;
-
         // Check if the cache tags are valid.
         if (!d8cache_cache_tags_is_valid($data->d8cache_checksum, $data->d8cache_tags)) {
           $item->valid = FALSE;
         }
 
-        if (!$allow_invalid && !$item->valid) {
-          continue;
-        }
-
         $item->data = $data->d8cache_data;
+      }
+
+      if (!$allow_invalid && !$item->valid) {
+        continue;
       }
 
       $cache[$cid] = $item;
