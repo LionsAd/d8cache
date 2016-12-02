@@ -105,13 +105,11 @@ class D8CacheAttachmentsCollector extends D8Cache {
       }
     }
 
-    if (!empty($attachments)) {
-      // Create a pseudo render array.
-      $data = array(
-        '#d8cache_data' => $data,
-        '#attached' => $attachments,
-      );
-    }
+    // Create a pseudo render array.
+    $data = array(
+      '#d8cache_data' => $data,
+      '#attached' => $attachments,
+    );
 
     parent::set($cid, $data, $expire, $tags);
   }
