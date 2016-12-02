@@ -70,6 +70,29 @@ users and menus are considered content here, too.
 The line is drawn where things are edited live by content editors (not admins)
 vs. things that should be deployed via features / in code.
 
+D8CacheAttachmentsCollector
+---------------------------
+
+The D8CacheAttachmentsCollector ensures that no procedural calls to
+drupal_add_cache_tags() or drupal_set_cache_max_age() get lost.
+
+In the future (once core support for it is included) this will also
+automatically collect attachments from drupal_add_*() functions, which
+will automatically collect assets like 'js', 'css' or 'library'.
+
+This will make render caching in Drupal 7 easier than ever before.
+
+The D8CacheAttachmentsCollector also has special code for the block
+module to ensure its cache_get_multiple() support does not break the
+asset collection.
+
+The hope is that eventually large parts of D8Cache will become part of Drupal 7
+core itself.
+
+Once block cache and render cache in core are fixed, then the
+D8CacheAttachmentsCollector will mostly be useful for views and panels to give
+them the ability to collect assets as well.
+
 Frequently asked questions
 --------------------------
 
@@ -193,3 +216,49 @@ To emit a specific Cache-Control header based on the max-age set by the page, us
       header('Cache-Control', 'public, max-age=' . $max_age);
     }
   }
+
+- When does max-age "bubble up" to containing cache items and when does it not?
+
+Due to legacy reasons neither a 'ttl' set via $conf in settings.php nor a time
+set via 'expire' (e.g. via a time based views cache plugin) is taken as a
+cache max-age value in the sense that it affects the whole page.
+
+If you need this add:
+
+  drupal_set_cache_max_age(3600);
+
+in your code somewhere and every upper cache layer will be affected (except for
+Varnish as stated already above).
+
+- My question is not answered here, what should I do?
+
+Please open an issue here:
+
+  http://drupal.org/project/issues/d8cache
+
+- Is there more material to learn about cache tags and cache max-age?
+
+The official documentation for Drupal 8 is the best resource right now:
+
+  https://www.drupal.org/docs/8/api/cache-api/cache-tags
+  https://www.drupal.org/docs/8/api/cache-api/cache-max-age
+
+The backported API for Drupal 7 should be as similar as possible. See also
+the section "Drupal 8 API comparison" above.
+
+- I want to use d8cache in my contrib module to expire my cache using tags
+  how can I do that?
+
+First of all you need to depend on 'd8cache' and then you should use:
+
+  $cache = d8cache_cache_get_object('cache_mymodule');
+  $cache->set($cid, $data, $expire, $tags);
+
+While there is no function to set tags, using the cache object directly in this
+way is the best way to achieve that.
+
+- I want to use a different backend to store cache tags rather than the database?
+
+The best way is to extend the D8Cache and D8CacheAttachmentsCollector classes
+and use a trait to override the checksumValid() and getCurrentChecksum()
+functions. Your module should also implement hook_cache_tags_invalidate().
