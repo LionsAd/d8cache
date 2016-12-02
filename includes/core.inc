@@ -109,10 +109,10 @@ function drupal_get_cacheable_metadata_from_render_array($build) {
   }
 
   $contexts = array();
-  // @todo Implement cache contexts.
-
   $max_age = CACHE_MAX_AGE_PERMANENT;
+  $tags = array('rendered');
 
+  // @todo Implement cache contexts.
   if (isset($build['#attached']['drupal_set_cache_max_age'])) {
     foreach ($build['#attached']['drupal_set_cache_max_age'] as $key => $parameters) {
       if (!isset($parameters[0])) {
@@ -123,8 +123,6 @@ function drupal_get_cacheable_metadata_from_render_array($build) {
     }
   }
 
-  $tags = array();
-
   if (isset($build['#attached']['drupal_add_cache_tags'])) {
     foreach ($build['#attached']['drupal_add_cache_tags'] as $key => $parameters) {
       if (!isset($parameters[0])) {
@@ -133,9 +131,6 @@ function drupal_get_cacheable_metadata_from_render_array($build) {
 
       $tags = drupal_merge_cache_tags($tags, $parameters[0]);
     }
-
-    // Add the 'rendered' cache tag.
-    $tags = drupal_merge_cache_tags($tags, array('rendered'));
     sort($tags);
   }
 
