@@ -16,9 +16,6 @@ require_once __DIR__ . '/includes/node.inc';
 require_once __DIR__ . '/includes/theme.inc';
 require_once __DIR__ . '/includes/user.inc';
 
-// @todo Remove once integrated into drops-7.
-require_once __DIR__ . '/includes/pantheon.inc';
-
 // -----------------------------------------------------------------------
 // Core Hooks
 
