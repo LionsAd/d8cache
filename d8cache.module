@@ -16,6 +16,8 @@ require_once __DIR__ . '/includes/node.inc';
 require_once __DIR__ . '/includes/theme.inc';
 require_once __DIR__ . '/includes/user.inc';
 
+require_once __DIR__ . '/includes/views.inc';
+
 // -----------------------------------------------------------------------
 // Core Hooks
 
